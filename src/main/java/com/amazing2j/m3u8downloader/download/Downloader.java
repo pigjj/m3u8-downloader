@@ -53,7 +53,7 @@ public class Downloader {
 
         Response response = httpClient.newCall(request).execute();
         if (!response.isSuccessful()) {
-            log.error("请求异常： {}", Objects.requireNonNull(response.body()).string());
+            log.error("地址: {}, 请求异常： {}", url, Objects.requireNonNull(response.body()).string());
             throw new DownloadException(String.format("请求异常: %s", response.code()));
         }
 

@@ -40,9 +40,8 @@ public class M3u8Downloader {
         List<String> tsList = new ArrayList<>();
         String keyLine = null;
         for (int i = 0; i < lines.length; i++) {
-            String TS_KEY = "#EXTINF";
-            if (lines[i].contains(TS_KEY)) {
-                tsList.add(lines[i + 1]);
+            if (!lines[i].startsWith("#")) {
+                tsList.add(lines[i]);
             }
             String x_KEY = "#EXT-X-KEY";
             if (lines[i].contains(x_KEY)) {
@@ -80,7 +79,12 @@ public class M3u8Downloader {
         }
         tsUtils.clean(m3u8Entity.getVideoName());
         for (int i = 0; i < tsList.size(); i++) {
-            String dlUrl = String.format("%s/%s", m3u8Entity.getTsDlPrefix(), tsList.get(i));
+            String dlUrl;
+            if (tsList.get(i).startsWith("http") || tsList.get(i).startsWith("https")) {
+                dlUrl = tsList.get(i);
+            } else {
+                dlUrl = String.format("%s/%s", m3u8Entity.getTsDlPrefix(), tsList.get(i));
+            }
             log.info("视频: {}, 一共: {} 个ts, 正在下载第: {} 个ts, 地址为: {}", m3u8Entity.getVideoName(), tsList.size(), i, dlUrl);
             tsUtils.download(m3u8Entity.getVideoName(), dlUrl, m3u8Entity.getKeyBody(), m3u8Entity.getIv());
         }

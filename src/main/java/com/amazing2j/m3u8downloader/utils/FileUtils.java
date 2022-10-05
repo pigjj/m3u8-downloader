@@ -44,7 +44,7 @@ public class FileUtils {
      * @return 视频文件对象
      */
     public File markVideoReady(String fileName) {
-        String filePath = String.format("%s%s%s.mp4.temp", videoSavePath, File.separator, fileName);
+        String filePath = String.format("%s%s%s", videoSavePath, File.separator, fileName);
         File tempFile = new File(filePath);
         if (!tempFile.isFile()) {
             log.error("已下载的视频文件不存在: {}", filePath);
