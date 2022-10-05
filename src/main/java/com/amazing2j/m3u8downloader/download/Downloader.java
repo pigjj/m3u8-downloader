@@ -2,7 +2,6 @@ package com.amazing2j.m3u8downloader.download;
 
 import com.amazing2j.m3u8downloader.exception.DownloadException;
 import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
