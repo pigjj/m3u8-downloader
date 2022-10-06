@@ -3,6 +3,7 @@ package com.amazing2j.m3u8downloader.download;
 import com.amazing2j.m3u8downloader.entity.M3u8Entity;
 import com.amazing2j.m3u8downloader.entity.ProxyEntity;
 import com.amazing2j.m3u8downloader.entity.StorageEntity;
+import com.amazing2j.m3u8downloader.service.DiskInfoService;
 import com.amazing2j.m3u8downloader.utils.TsUtils;
 import com.amazing2j.m3u8downloader.utils.UrlUtils;
 import org.slf4j.Logger;
@@ -22,8 +23,11 @@ public class M3u8Downloader {
 
     private final TsUtils tsUtils;
 
+    private final DiskInfoService diskInfoService;
+
     public M3u8Downloader(ProxyEntity proxyEntity, StorageEntity storageEntity) {
         this.tsUtils = new TsUtils(proxyEntity, storageEntity);
+        this.diskInfoService = new DiskInfoService();
     }
 
     public TsUtils getTsUtils() {
@@ -85,13 +89,17 @@ public class M3u8Downloader {
      *
      * @param m3u8Entity {@link M3u8Entity}
      */
-    private void downloadTs(M3u8Entity m3u8Entity) {
+    private void downloadTs(M3u8Entity m3u8Entity) throws InterruptedException {
         List<String> tsList = m3u8Entity.getTsList();
         if (tsList == null) {
             return;
         }
         tsUtils.clean(m3u8Entity.getVideoName());
         for (int i = 0; i < tsList.size(); i++) {
+            while (diskInfoService.getDiskUsage() >= 0.9) {
+                log.warn("磁盘使用率高于90%, 暂停所有下载");
+                Thread.sleep(5 * 1000);
+            }
             String dlUrl;
             if (tsList.get(i).startsWith("http") || tsList.get(i).startsWith("https")) {
                 dlUrl = tsList.get(i);
