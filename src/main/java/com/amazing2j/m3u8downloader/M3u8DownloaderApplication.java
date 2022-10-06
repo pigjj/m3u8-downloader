@@ -12,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 public class M3u8DownloaderApplication {
 
@@ -36,7 +35,7 @@ public class M3u8DownloaderApplication {
                 String videoName = dlMap.get("videoName");
                 String videoUrl = dlMap.get("videoUrl");
                 log.info("下载第{}个视频: {}, 地址: {}", i, videoName, videoUrl);
-                m3u8Downloader.download(videoName, videoUrl);
+                m3u8Downloader.doDownload(videoUrl);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

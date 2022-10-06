@@ -3,8 +3,13 @@ package com.amazing2j.m3u8downloader.download;
 import com.amazing2j.m3u8downloader.entity.M3u8Entity;
 import com.amazing2j.m3u8downloader.entity.ProxyEntity;
 import com.amazing2j.m3u8downloader.entity.StorageEntity;
+import com.amazing2j.m3u8downloader.exception.ParseException;
 import com.amazing2j.m3u8downloader.utils.TsUtils;
 import com.amazing2j.m3u8downloader.utils.UrlUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +31,48 @@ public class M3u8Downloader {
         this.tsUtils = new TsUtils(proxyEntity, storageEntity);
     }
 
+    public void doDownload(String url) throws Exception {
+        log.info("当前时间: {}, 开始下载: {}", LocalDateTime.now(), url);
+        String fileName = UrlUtils.videoNameParser(url);
+        byte[] bodyBytes = tsUtils.downloadHtml(url);
+        this.parseM3u8Info(fileName, bodyBytes);
+    }
+
+    private void parseM3u8Info(String fileName, byte[] htmlContent) throws Exception {
+        Document document = Jsoup.parse(new String(htmlContent));
+        String SECTION_CLASS = "pb-3 pb-e-lg-30";
+        Elements elements = document.getElementsByClass(SECTION_CLASS);
+        if (elements.size() != 1) {
+            throw new ParseException(String.format("解析HTML: %s 失败, 未找到m3u8标签", fileName));
+        }
+        Element m3u8ScriptElement = elements.get(0).child(2);
+
+        String[] rows = m3u8ScriptElement.html().split("\t");
+
+        String hlsUrl = this.parseHlsUrl(fileName, rows);
+
+        this.download(fileName, hlsUrl);
+    }
+
+
+    public String parseHlsUrl(String fileName, String[] contents) {
+        String hslLine = null;
+        String HLS_PREFIX = "var hlsUrl = ";
+        for (String content : contents) {
+            if (content.contains(HLS_PREFIX)) {
+                hslLine = content;
+                break;
+            }
+        }
+        if (hslLine == null) {
+            throw new ParseException(String.format("解析HLS地址失败, HTML: %s", fileName));
+        }
+        hslLine = hslLine.replace("'", "");
+        hslLine = hslLine.replace(";", "");
+        hslLine = hslLine.replace(HLS_PREFIX, "");
+        return hslLine;
+    }
+
     /**
      * 下载函数
      *
@@ -33,7 +80,7 @@ public class M3u8Downloader {
      * @param m3u8Url   m3u8下载地址
      * @throws Exception 下载异常
      */
-    public void download(String videoName, String m3u8Url) throws Exception {
+    private void download(String videoName, String m3u8Url) throws Exception {
         byte[] body = tsUtils.downloadM3u8(m3u8Url);
         String m3u8ContentStr = new String(body);
         String[] lines = m3u8ContentStr.split("\n");
@@ -50,8 +97,18 @@ public class M3u8Downloader {
         }
         String urlPrefix = UrlUtils.xKeyParser(m3u8Url);
         M3u8Entity m3u8Entity;
+
+        String[] keyLines = null;
+
         if (keyLine != null) {
-            String xKey = this.parseXKey(keyLine);
+            keyLines = keyLine.split(",");
+            if (keyLines.length < 2) {
+                keyLines = null;
+            }
+        }
+
+        if (keyLines != null) {
+            String xKey = this.parseXKey(keyLines);
             String iv = this.parseIV(keyLine);
 
             String xKeyDlUrl = String.format("%s%s%s", urlPrefix, File.separator, xKey);
@@ -70,9 +127,8 @@ public class M3u8Downloader {
      * 下载视频关联的所有TS文件
      *
      * @param m3u8Entity {@link M3u8Entity}
-     * @throws Exception 下载异常
      */
-    private void downloadTs(M3u8Entity m3u8Entity) throws Exception {
+    private void downloadTs(M3u8Entity m3u8Entity) {
         List<String> tsList = m3u8Entity.getTsList();
         if (tsList == null) {
             return;
@@ -86,7 +142,11 @@ public class M3u8Downloader {
                 dlUrl = String.format("%s/%s", m3u8Entity.getTsDlPrefix(), tsList.get(i));
             }
             log.info("视频: {}, 一共: {} 个ts, 正在下载第: {} 个ts, 地址为: {}", m3u8Entity.getVideoName(), tsList.size(), i, dlUrl);
-            tsUtils.download(m3u8Entity.getVideoName(), dlUrl, m3u8Entity.getKeyBody(), m3u8Entity.getIv());
+            try {
+                tsUtils.download(m3u8Entity.getVideoName(), dlUrl, m3u8Entity.getKeyBody(), m3u8Entity.getIv());
+            } catch (Exception e) {
+                log.error("TS文件不存在: {}", dlUrl);
+            }
         }
 
         File file = tsUtils.finish(m3u8Entity.getVideoName());
@@ -98,14 +158,10 @@ public class M3u8Downloader {
     /**
      * 如果M3U8被加密, 解析M3U8文件中的加密Key下载路径
      *
-     * @param keyLine 包含key路径的m3u8行内容
+     * @param keyLines 包含key路径的m3u8行内容
      * @return 加密key
      */
-    private String parseXKey(String keyLine) {
-        if (keyLine == null) {
-            return null;
-        }
-        String[] keyLines = keyLine.split(",");
+    private String parseXKey(String[] keyLines) {
         String keyFileName = keyLines[1];
         keyFileName = keyFileName.replace("URI=", "");
         return keyFileName.replace("\"", "");

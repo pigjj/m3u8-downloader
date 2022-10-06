@@ -1,10 +1,17 @@
 package com.amazing2j.m3u8downloader.utils;
 
 import com.amazing2j.m3u8downloader.download.Downloader;
+import com.amazing2j.m3u8downloader.entity.M3u8Entity;
 import com.amazing2j.m3u8downloader.entity.ProxyEntity;
 import com.amazing2j.m3u8downloader.entity.StorageEntity;
+import com.amazing2j.m3u8downloader.exception.ParseException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.File;
+import java.io.IOException;
 
 public class TsUtils {
 
@@ -19,6 +26,13 @@ public class TsUtils {
             this.downloader = new Downloader(proxyEntity.getHost(), proxyEntity.getPort());
         }
         this.fileUtils = new FileUtils(storageEntity.getVideoSavePath(), storageEntity.getM3u8SavePath(), storageEntity.getTsSavePath());
+    }
+
+    public byte[] downloadHtml(String url) throws Exception {
+        String fileName = UrlUtils.videoNameParser(url);
+        byte[] bodyBytes = downloader.download(url);
+        fileUtils.saveM3u8(fileName, bodyBytes);
+        return bodyBytes;
     }
 
     public byte[] downloadM3u8(String url) throws Exception {
