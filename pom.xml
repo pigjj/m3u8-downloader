@@ -82,7 +82,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        com.amazing2j.m3u8downloader.M3u8DownloaderApplication
+                                        com.amazing2j.m3u8downloader.JableTvM3u8DownloaderApplication
                                     </mainClass>
                                 </manifest>
                             </archive>

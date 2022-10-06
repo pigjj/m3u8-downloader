@@ -13,10 +13,10 @@ import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 
-public class M3u8DownloaderApplication {
+public class JableTvM3u8DownloaderApplication {
 
     public static void main(String[] args) throws FileNotFoundException {
-        final Logger log = LoggerFactory.getLogger(M3u8DownloaderApplication.class);
+        final Logger log = LoggerFactory.getLogger(JableTvM3u8DownloaderApplication.class);
 
         log.info(System.getProperty("user.dir"));
 
@@ -35,7 +35,7 @@ public class M3u8DownloaderApplication {
                 String videoName = dlMap.get("videoName");
                 String videoUrl = dlMap.get("videoUrl");
                 log.info("下载第{}个视频: {}, 地址: {}", i, videoName, videoUrl);
-                m3u8Downloader.download(videoName, videoUrl);
+                m3u8Downloader.doJableDownload(videoName, videoUrl);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -31,11 +31,17 @@ public class M3u8Downloader {
         this.tsUtils = new TsUtils(proxyEntity, storageEntity);
     }
 
-    public void doDownload(String url) throws Exception {
-        log.info("当前时间: {}, 开始下载: {}", LocalDateTime.now(), url);
-        String fileName = UrlUtils.videoNameParser(url);
+    /**
+     * 根据指定的jable.tv的视频地址自动下载关联的视频
+     *
+     * @param videoName 视屏名称
+     * @param url       视频地址
+     * @throws Exception 抛出的异常
+     */
+    public void doJableDownload(String videoName, String url) throws Exception {
+        log.info("当前时间: {}, 开始下载: {}", LocalDateTime.now(), videoName);
         byte[] bodyBytes = tsUtils.downloadHtml(url);
-        this.parseM3u8Info(fileName, bodyBytes);
+        this.parseM3u8Info(videoName, bodyBytes);
     }
 
     private void parseM3u8Info(String fileName, byte[] htmlContent) throws Exception {
@@ -80,7 +86,7 @@ public class M3u8Downloader {
      * @param m3u8Url   m3u8下载地址
      * @throws Exception 下载异常
      */
-    private void download(String videoName, String m3u8Url) throws Exception {
+    public void download(String videoName, String m3u8Url) throws Exception {
         byte[] body = tsUtils.downloadM3u8(m3u8Url);
         String m3u8ContentStr = new String(body);
         String[] lines = m3u8ContentStr.split("\n");
