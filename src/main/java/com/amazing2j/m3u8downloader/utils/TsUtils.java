@@ -20,7 +20,7 @@ public class TsUtils {
     private final FileUtils fileUtils;
 
     public TsUtils(ProxyEntity proxyEntity, StorageEntity storageEntity) {
-        if (proxyEntity.getHost() == null || proxyEntity.getHost().equals("")) {
+        if (proxyEntity.getHost() == null || "".equals(proxyEntity.getHost())) {
             this.downloader = new Downloader();
         } else {
             this.downloader = new Downloader(proxyEntity.getHost(), proxyEntity.getPort());

@@ -35,7 +35,7 @@ public class M3u8DownloaderApplication {
                 String videoName = dlMap.get("videoName");
                 String videoUrl = dlMap.get("videoUrl");
                 log.info("下载第{}个视频: {}, 地址: {}", i, videoName, videoUrl);
-                m3u8Downloader.download(videoName, videoUrl);
+                m3u8Downloader.downloadM3u8(videoName, videoUrl);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

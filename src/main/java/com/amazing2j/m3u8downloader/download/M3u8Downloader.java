@@ -3,13 +3,8 @@ package com.amazing2j.m3u8downloader.download;
 import com.amazing2j.m3u8downloader.entity.M3u8Entity;
 import com.amazing2j.m3u8downloader.entity.ProxyEntity;
 import com.amazing2j.m3u8downloader.entity.StorageEntity;
-import com.amazing2j.m3u8downloader.exception.ParseException;
 import com.amazing2j.m3u8downloader.utils.TsUtils;
 import com.amazing2j.m3u8downloader.utils.UrlUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,52 +26,8 @@ public class M3u8Downloader {
         this.tsUtils = new TsUtils(proxyEntity, storageEntity);
     }
 
-    /**
-     * 根据指定的jable.tv的视频地址自动下载关联的视频
-     *
-     * @param videoName 视屏名称
-     * @param url       视频地址
-     * @throws Exception 抛出的异常
-     */
-    public void doJableDownload(String videoName, String url) throws Exception {
-        log.info("当前时间: {}, 开始下载: {}", LocalDateTime.now(), videoName);
-        byte[] bodyBytes = tsUtils.downloadHtml(url);
-        this.parseM3u8Info(videoName, bodyBytes);
-    }
-
-    private void parseM3u8Info(String fileName, byte[] htmlContent) throws Exception {
-        Document document = Jsoup.parse(new String(htmlContent));
-        String SECTION_CLASS = "pb-3 pb-e-lg-30";
-        Elements elements = document.getElementsByClass(SECTION_CLASS);
-        if (elements.size() != 1) {
-            throw new ParseException(String.format("解析HTML: %s 失败, 未找到m3u8标签", fileName));
-        }
-        Element m3u8ScriptElement = elements.get(0).child(2);
-
-        String[] rows = m3u8ScriptElement.html().split("\t");
-
-        String hlsUrl = this.parseHlsUrl(fileName, rows);
-
-        this.download(fileName, hlsUrl);
-    }
-
-
-    public String parseHlsUrl(String fileName, String[] contents) {
-        String hslLine = null;
-        String HLS_PREFIX = "var hlsUrl = ";
-        for (String content : contents) {
-            if (content.contains(HLS_PREFIX)) {
-                hslLine = content;
-                break;
-            }
-        }
-        if (hslLine == null) {
-            throw new ParseException(String.format("解析HLS地址失败, HTML: %s", fileName));
-        }
-        hslLine = hslLine.replace("'", "");
-        hslLine = hslLine.replace(";", "");
-        hslLine = hslLine.replace(HLS_PREFIX, "");
-        return hslLine;
+    public TsUtils getTsUtils() {
+        return tsUtils;
     }
 
     /**
@@ -86,7 +37,7 @@ public class M3u8Downloader {
      * @param m3u8Url   m3u8下载地址
      * @throws Exception 下载异常
      */
-    public void download(String videoName, String m3u8Url) throws Exception {
+    public void downloadM3u8(String videoName, String m3u8Url) throws Exception {
         byte[] body = tsUtils.downloadM3u8(m3u8Url);
         String m3u8ContentStr = new String(body);
         String[] lines = m3u8ContentStr.split("\n");
