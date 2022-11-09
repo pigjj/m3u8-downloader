@@ -26,6 +26,8 @@ public class M3u8Entity {
 
     private String videoTitle;
 
+    private String md5Str;
+
 
     public M3u8Entity(String videoName, String tsDlPrefix, byte[] keyBody, String iv, String hlsUrl, List<String> tsList, String videoSavePath, double videoSize, String videoTitle) {
         this.videoName = videoName;
@@ -109,5 +111,13 @@ public class M3u8Entity {
 
     public void setVideoTitle(String videoTitle) {
         this.videoTitle = videoTitle;
+    }
+
+    public void setMd5Str(String md5Str) {
+        this.md5Str = md5Str;
+    }
+
+    public String getMd5Str() {
+        return md5Str;
     }
 }

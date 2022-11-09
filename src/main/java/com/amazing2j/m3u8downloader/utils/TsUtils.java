@@ -28,11 +28,8 @@ public class TsUtils {
         this.fileUtils = new FileUtils(storageEntity.getVideoSavePath(), storageEntity.getM3u8SavePath(), storageEntity.getTsSavePath());
     }
 
-    public byte[] downloadHtml(String url) throws Exception {
-        String fileName = UrlUtils.videoNameParser(url);
-        byte[] bodyBytes = downloader.download(url);
-        fileUtils.saveM3u8(fileName, bodyBytes);
-        return bodyBytes;
+    public byte[] download(String url) throws Exception {
+        return downloader.download(url);
     }
 
     public byte[] downloadM3u8(String url) throws Exception {

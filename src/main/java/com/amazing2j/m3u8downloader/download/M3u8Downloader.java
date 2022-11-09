@@ -1,15 +1,16 @@
 package com.amazing2j.m3u8downloader.download;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import com.amazing2j.m3u8downloader.entity.M3u8Entity;
 import com.amazing2j.m3u8downloader.entity.ProxyEntity;
 import com.amazing2j.m3u8downloader.entity.StorageEntity;
-import com.amazing2j.m3u8downloader.service.DiskInfoService;
 import com.amazing2j.m3u8downloader.utils.TsUtils;
 import com.amazing2j.m3u8downloader.utils.UrlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +24,8 @@ public class M3u8Downloader {
 
     private final TsUtils tsUtils;
 
-    private final DiskInfoService diskInfoService;
-
     public M3u8Downloader(ProxyEntity proxyEntity, StorageEntity storageEntity) {
         this.tsUtils = new TsUtils(proxyEntity, storageEntity);
-        this.diskInfoService = new DiskInfoService();
     }
 
     public TsUtils getTsUtils() {
@@ -41,7 +39,7 @@ public class M3u8Downloader {
      * @param m3u8Url   m3u8下载地址
      * @throws Exception 下载异常
      */
-    public void downloadM3u8(String videoName, String m3u8Url) throws Exception {
+    public M3u8Entity downloadM3u8(String videoName, String m3u8Url) throws Exception {
         byte[] body = tsUtils.downloadM3u8(m3u8Url);
         String m3u8ContentStr = new String(body);
         String[] lines = m3u8ContentStr.split("\n");
@@ -82,6 +80,22 @@ public class M3u8Downloader {
         }
 
         this.downloadTs(m3u8Entity);
+
+        return m3u8Entity;
+    }
+
+    /**
+     * 下载文件并保存
+     *
+     * @param videoName    视频名称
+     * @param url          地址
+     * @param outputStream 输出流
+     * @throws Exception 异常
+     */
+    public void downloadAndSave(String videoName, String url, OutputStream outputStream) throws Exception {
+        byte[] body = tsUtils.download(url);
+        outputStream.write(body);
+        log.info("视频: {} 关联文件地址: {} 下载成功", videoName, url);
     }
 
     /**
@@ -96,10 +110,6 @@ public class M3u8Downloader {
         }
         tsUtils.clean(m3u8Entity.getVideoName());
         for (int i = 0; i < tsList.size(); i++) {
-            while (diskInfoService.getDiskUsage() >= 0.9) {
-                log.warn("磁盘使用率高于90%, 暂停所有下载");
-                Thread.sleep(5 * 1000);
-            }
             String dlUrl;
             if (tsList.get(i).startsWith("http") || tsList.get(i).startsWith("https")) {
                 dlUrl = tsList.get(i);
@@ -118,6 +128,7 @@ public class M3u8Downloader {
         log.info("当前时间: {}, 下载完成: {}, 总大小为: {}GB", LocalDateTime.now(), m3u8Entity.getVideoName(), (double) (file.length() / (1024 * 1024 * 1024)));
         m3u8Entity.setVideoSavePath(file.getPath());
         m3u8Entity.setVideoSize(file.length());
+        m3u8Entity.setMd5Str(DigestUtil.md5Hex(file));
     }
 
     /**
